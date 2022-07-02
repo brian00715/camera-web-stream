@@ -17,15 +17,15 @@ import time
 
 exit_flag = 0
 
-# >>>Aliyun MQTT Configs
-instanceId = '******'  # Please use yours
-accessKey = '******'  # Please use yours
-secretKey = '******'  # Please use yours
+# >>>Aliyun MQTTç›¸å…³å‚æ•°
+instanceId = 'post-cn-7mz2erf3a1d'
+accessKey = 'LTAI5tPibjTFptnXwfVdhhBX'
+secretKey = '8QEsSJ6I1ifNSv4TLnQtxsdl9SH9Nk'
 groupId = 'GID_RPi_4B'
 client_uuid = '00002'
 client_id = groupId+'@@@'+client_uuid
 mq_topic = 'pi_camera'
-brokerUrl = '******'# Please use yours
+brokerUrl = 'post-cn-7mz2erf3a1d.mqtt.aliyuncs.com'
 use_p2p_flag = 0
 server_uuid = None
 

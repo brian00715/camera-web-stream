@@ -4,17 +4,19 @@ import struct
 import sys
 import threading
 import time
+import json
 
 import cv2
 import numpy
+import base64
 
-WAN_IP = ["82.157.153.61", 6002]
-LAN_IP = ["10.128.230.229", 7999]
+WAN_IP = ("82.157.153.61", 6002)
+LAN_IP = ("10.128.199.198", 8000)
 web_cam = None
 
 
 class WebCamClient:
-    def __init__(self, resolution=(640, 480, 30), remote_address=(LAN_IP[0], LAN_IP[1]), windows_name="video",
+    def __init__(self, resolution=(640, 480, 30), remote_address=LAN_IP, windows_name="video",
                  stream2web=False):
         self.remote_address = remote_address
         self.resolution = resolution
@@ -37,37 +39,41 @@ class WebCamClient:
         self.socket.connect(self.remote_address)
 
     def _process_image(self):
-        self.socket.send(struct.pack(
-            "qhhh", self.img_quality, self.resolution[0], self.resolution[1], self.resolution[2]))
         while True:
             try:
                 # 注意！Linux平台和Windows平台对long类型的定义是不一样的！
-                info = struct.unpack("qhhh14s", self.socket.recv(28))
+                info = struct.unpack("I", self.socket.recv(4))
                 buffer_size = info[0]
-                img_sent_time = float(info[4])
-                if buffer_size:
-                    self.mutex.acquire()  # 线程锁
-                    self.jpg_buffer = b''  #
-                    while buffer_size:  # 循环读取，此时是jpg的字节流
-                        tempBuf = self.socket.recv(buffer_size)
-                        buffer_size -= len(tempBuf)
-                        self.jpg_buffer += tempBuf
-                    self.jpg_buffer_ok = True
-                    if not self._stream2web:
-                        data = numpy.frombuffer(
-                            self.jpg_buffer, dtype='uint8')  # 将字节流转为数字矩阵
-                        # 将jpg矩阵转为opecv numpy矩阵
-                        self.img = cv2.imdecode(data, 1)
-                        cv2.imshow(self.name, self.img)
-                        if cv2.waitKey(1) == 27:  # ESC
-                            self.socket.close()
-                            cv2.destroyAllWindows()
-                            print("放弃连接")
-                            break
-                    # 从服务器发送帧到解码完成的时间延迟/ms
-                    time_delay = int((time.time() - img_sent_time) * 1000)
-                    # print("delay: %d ms" % time_delay)
-                    self.mutex.release()
+
+                self.mutex.acquire()  # 线程锁
+                payload_buffer = b''
+                while buffer_size:  # 循环读取，此时是jpg的字节流
+                    temp_buffer = self.socket.recv(buffer_size)
+                    buffer_size -= len(temp_buffer)
+                    payload_buffer += temp_buffer
+                self.jpg_buffer_ok = True
+                payload_json = json.loads(payload_buffer)
+
+                if not self._stream2web:
+                    stream_jpg = base64.decodebytes(
+                        bytes(payload_json['image'], encoding='utf-8'))
+                    data = numpy.frombuffer(
+                        stream_jpg, dtype='uint8')  # 将字节流转为数字矩阵
+                    # 将jpg矩阵转为opecv numpy矩阵
+                    self.img = cv2.imdecode(data, 1)
+                    cv2.imshow(self.name, self.img)  # 显示帧
+                    if cv2.waitKey(1) == 27:  # ESC
+                        self.socket.close()
+                        cv2.destroyAllWindows()
+                        print("放弃连接")
+                        break
+
+                # 从服务器发送帧到解码完成的时间延迟/ms
+                time_delay = int((time.time() - payload_json['time']) * 1000)
+                print("delay: %d ms" % time_delay)
+
+                self.mutex.release()
+
             except KeyboardInterrupt:
                 self.socket.close()
                 cv2.destroyAllWindows()

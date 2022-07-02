@@ -12,14 +12,14 @@ from paho.mqtt.client import MQTT_LOG_INFO, MQTT_LOG_NOTICE, MQTT_LOG_WARNING, M
 
 exit_flag = 0
 
-instanceId = '******'  # Please use yours
-accessKey = '******'  # Please use yours
-secretKey = '******'  # Please use yours
+instanceId = 'post-cn-7mz2erf3a1d'
+accessKey = 'LTAI5tPibjTFptnXwfVdhhBX'
+secretKey = '8QEsSJ6I1ifNSv4TLnQtxsdl9SH9Nk'
 groupId = 'GID_RPi_4B'
 client_uuid = '00005'
 client_id = groupId + '@@@' + client_uuid
 mq_topic = 'pi_camera'
-brokerUrl = '******'# Please use yours
+brokerUrl = 'post-cn-7mz2erf3a1d.mqtt.aliyuncs.com'
 use_p2p_flag = 0
 server_uuid = None
 

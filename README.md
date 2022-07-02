@@ -1,25 +1,20 @@
 # WebCam
 
-Author: Simon Kenneth
-
-[中文文档](./README_CN.md)
-
-This project realizes the remote image transmission of USB camera based on three methods, all of which use opencv-python as the original image reading interface.
-
-Tested Plarform：
-> Client：Raspberry Pi 4B - Rasbian buster 64bit
+本项目基于三种方法实现了USB摄像头的远程图传，均使用opencv-python作为原始图像读取接口。
+测试平台为：
+> 服务端：树莓派4B Rasbian buster 64bit
 > 
-> Server：Windows 10 64bit，Ubuntu 18.04 LTS 64bit
-Note：Because different systems have different length definitions for data types , such as int and long, there may be some bugs running on the other platforms. 
+> 客户端：Windows 10 64bit，Ubuntu 18.04 LTS 64bit
+注意：由于不同系统对int、long等数据类型的长度定义不同，其他平台运行时可能会有bug。
 
-## Project Structure
+## 目录结构
 ```
 |-- mq 
 |  |-- client.py
 |  |-- server.py
 |-- web 
-|  |-- static     // page statics files
-|  |-- tempalates // HTML files
+|  |-- static //网页静态文件
+|  |-- tempalates //HTML文件
 |  |  |-- index.html
 |  |-- server.py
 |-- socket 
@@ -28,26 +23,26 @@ Note：Because different systems have different length definitions for data type
 |-- readme.md
 ```
 
-## Use
-Select a streaming method, such as socket. Launch a terminal under socket, and launch this for server:
+## 使用方法
+选择一种图传方法，例如socket，在socket下打开终端，服务端运行：
 ```python
 python3 server.py
 ```
-Launch this for client:
+客户端运行:
 ```python
 python3 client.py
 ```
+即可。
+## 说明
+1. mq目录中是基于阿里云MQTT实现的图传，实测延迟较大。优点是可以广播。
+2. web目录中实现了将图像推流到本机的flask服务器上，客户端访问页面取得图传，因此所有图像处理任务尽量在服务端完成。延迟适中。
+   > 存在一个小问题，由于每次访问页面都会重新声明VideoCapture对象，会导致抛出异常，服务端代码退出，因此请保证同时只有一个页面在运行。
+3. socket目录中实现了基于Socket UDP的图传，延迟最小，720p分辨率可达ms级。且客户端传输得到的是jpg帧，可以在客户端自由处理图像，`client_web.py`还实现了将获取到的视频流利用客户端flask服务器显示在网页上。通过FRP穿透内网服务可以实现公网图传。缺点是目前只支持一对一传输。
 
-## Note
-1. The MQ directory is based on Alibaba cloud MQTT, and the measured delay is large. The advantage is that it can be broadcast and asynchronous. Please replace your accessKey, accessSecret and other parameters when using。
-2. The web directory realizes the image streaming to the local flask server, and the client accesses the page to get the image transmission, so all image processing tasks should be completed on the server as far as possible. The delay is moderate.
-   > There is a small problem that every time you visit the page, the program redeclares the `VideoCapture` object, which will cause an exception to be thrown and the server code to exit. Therefore, please ensure that only one page is running at the same time。
-3. The socket directory realizes image transmission based on socket UDP, with minimum delay and 720p resolution up to **ms level**. And the JPG frame transmitted by the client can be processed freely on the client. `client_web.py ` also realizes the display of the obtained video stream on the web page using the client flask server. Through FRP intranet penetration service, public network streaming can be realized. The disadvantage is that currently only one-to-one transmission is supported
-
-## Appendix
-+ You can also use ROS for streaming using `web_video_server`
-   First install web_video_server：
+## 附录
++ 还可以使用ROS借助web_video_server进行图传。
+   首先安装web_video_server：
    ```shell
     sudo apt install ros-<ros distro>-web-video-server
    ```
-   Using method refers to [Official Instructions](http://wiki.ros.org/web_video_server). The toolkit only forwards video topics as HTTP stream. Therefore, a node should publish video topics at first. You can directly write a program to read camera frames with OpenCV and fill `sensor_msgs/Image` data type and then publish to a topic. You can also use `usb_cam` and other ROS packets read frames and use `theora_image_transport` package preliminarily compresses the video frame for lower transmission bandwidth.
+   使用方法参考[官方说明](http://wiki.ros.org/web_video_server)。该工具包只是转发视频话题为http流，因此首先要有一个节点发布视频话题，可以直接写一个程序用OpenCV读取摄像头帧，填充`sensor_msgs/Image`数据类型然后发布到某一个话题；也可以使用`usb_cam`等ros包读取帧，并使用`theora_image_transport`包对视频进行初步压缩。
