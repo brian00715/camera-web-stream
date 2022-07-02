@@ -1,0 +1,7 @@
+/build/
+/dist/
+*.spec
+*.cache
+video_info.txt
+video_config.txt
+__pycache__
